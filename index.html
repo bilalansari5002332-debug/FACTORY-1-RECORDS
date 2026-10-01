@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#172033">
+<title>Third Party Vendor Folders</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:#172033;font-family:Arial,sans-serif;padding-bottom:76px}
+header{background:#172033;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:21px}header p{margin:5px 0 0;font-size:12px;opacity:.85}
+.wrap{max-width:1000px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:15px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px #0000000c}
+h2{font-size:19px;margin:0 0 12px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px}
+label{display:block;font-size:12px;font-weight:bold;margin-bottom:5px}
+input,select,button{font:inherit;width:100%;padding:11px;border:1px solid #ccd3df;border-radius:9px}
+button{background:#172033;color:#fff;border:0;font-weight:bold;cursor:pointer}.secondary{background:#e9edf4;color:#172033}.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{width:auto}
+.folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.folder{background:#f4f6fa;border:1px solid #dce1ea;border-radius:15px;padding:16px;min-height:125px;cursor:pointer}
+.folder:active{transform:scale(.98)}.icon{font-size:42px}.fname{font-weight:bold;margin-top:7px;font-size:16px;word-break:break-word}.fmeta{font-size:12px;color:#667085;margin-top:5px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.kpi{background:#f1f4f8;padding:13px;border-radius:11px}.kpi span{font-size:12px;color:#667085}.kpi b{display:block;font-size:23px;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #e5e8ef;text-align:left;white-space:nowrap}th{background:#f1f4f8}
+.badge{display:inline-block;padding:4px 7px;border-radius:20px;font-size:11px;font-weight:bold}.ok{background:#e7f6ec;color:#18733a}.due{background:#fff0d6;color:#9a5b00}.over{background:#ffe1df;color:#a61b12}
+.tablewrap{overflow:auto}.small{font-size:12px;color:#667085}.hidden{display:none}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:grid;grid-template-columns:repeat(3,1fr);z-index:10}.bottom button{border-radius:0;background:#fff;color:#172033;padding:9px 3px;font-size:11px}.bottom b{display:block;font-size:19px}
+@media(max-width:600px){.wrap{padding:10px}.grid{grid-template-columns:1fr}.folder-grid{grid-template-columns:repeat(2,1fr)}}
+@media print{header,.bottom,#home,#addVendorCard,.no-print{display:none!important}.wrap{padding:0}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<header><h1>📁 Third Party Material</h1><p>Separate folder for every vendor • IN / OUT • remaining material • due alerts</p></header>
+
+<div class="wrap">
+<section id="home">
+<div class="card">
+<h2>Vendor Folders</h2>
+<p class="small">Create a folder once for each vendor. Every OUT and IN entry for that vendor stays inside that folder.</p>
+<div id="folders" class="folder-grid"></div>
+</div>
+<div class="card" id="addVendorCard">
+<h2>➕ Create Vendor Folder</h2>
+<div class="grid">
+<div><label>Vendor Name</label><input id="newVendor" placeholder="e.g. ABC Lachai"></div>
+</div><br>
+<button onclick="createVendor()">Create Vendor Folder</button>
+</div>
+<div class="card">
+<h2>⚠️ Overall Alerts</h2>
+<div class="kpis">
+<div class="kpi"><span>Open Vendor Records</span><b id="openLots">0</b></div>
+<div class="kpi"><span>Material With Vendors</span><b id="pendingQty">0</b></div>
+<div class="kpi"><span>Overdue</span><b id="overdue">0</b></div>
+</div>
+</div>
+</section>
+
+<section id="vendorPage" class="hidden">
+<div class="card">
+<div class="actions"><button class="secondary" onclick="goHome()">← Vendor Folders</button><button onclick="printCurrent()">📄 PDF</button></div>
+<h2 id="vendorTitle" style="margin-top:14px">📁 Vendor</h2>
+<div class="kpis">
+<div class="kpi"><span>Total OUT</span><b id="vOut">0</b></div>
+<div class="kpi"><span>Total IN</span><b id="vIn">0</b></div>
+<div class="kpi"><span>Material LEFT</span><b id="vLeft">0</b></div>
+<div class="kpi"><span>Overdue</span><b id="vOver">0</b></div>
+</div>
+</div>
+
+<div class="card">
+<h2>📤 Material OUT</h2>
+<div class="grid">
+<div><label>Invoice / Record No.</label><input id="invoice" placeholder="OUT-001"></div>
+<div><label>Date</label><input id="outDate" type="date"></div>
+<div><label>Material Name</label><input id="material" list="materials" placeholder="Material"><datalist id="materials"></datalist></div>
+<div><label>Quantity</label><input id="qty" type="number" min="0" step="0.001"></div>
+<div><label>Unit</label><input id="unit" placeholder="kg / pcs"></div>
+<div><label>Expected Return / Due Date</label><input id="due" type="date"></div>
+</div><br><button onclick="addOut()">Save OUT</button>
+</div>
+
+<div class="card">
+<h2>📥 Material IN</h2>
+<div class="grid">
+<div><label>Open OUT Entry</label><select id="inRecord"></select></div>
+<div><label>Return Date</label><input id="inDate" type="date"></div>
+<div><label>Received Quantity</label><input id="inQty" type="number" min="0" step="0.001"></div>
+</div><br><button onclick="addIn()">Save IN</button>
+</div>
+
+<div class="card">
+<h2>📒 This Vendor's Ledger</h2>
+<div class="tablewrap"><table><thead><tr><th>Date</th><th>Type</th><th>Invoice</th><th>Material</th><th>Qty</th><th>Balance</th><th>Due</th><th>Status</th></tr></thead><tbody id="ledger"></tbody></table></div>
+</div>
+</section>
+</div>
+
+<nav class="bottom">
+<button onclick="goHome()"><b>⌂</b>Vendors</button>
+<button onclick="currentVendor?scrollToEntry('out'):goHome()"><b>＋</b>OUT</button>
+<button onclick="currentVendor?scrollToEntry('in'):goHome()"><b>↓</b>IN</button>
+</nav>
+
+<script>
+const KEY="third_party_vendor_folders_v2";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"vendors":[],"records":[]}');
+db.vendors=db.vendors||[];db.records=db.records||[];
+let currentVendor="";
+
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderHome();if(currentVendor)renderVendor();}
+function esc(x){return String(x).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function today(){return new Date().toISOString().slice(0,10)}
+function days(d){return Math.ceil((new Date(d+"T23:59:59")-new Date())/86400000)}
+function status(r){
+ let bal=Number(r.qty)-Number(r.received||0);
+ if(bal<=0)return ["Completed","ok"];
+ let n=days(r.due);
+ if(n<0)return ["OVERDUE "+Math.abs(n)+"d","over"];
+ if(n<=3)return ["DUE SOON "+n+"d","due"];
+ return ["Open","ok"];
+}
+function createVendor(){
+ let name=document.getElementById("newVendor").value.trim();
+ if(!name)return alert("Enter vendor name.");
+ if(db.vendors.some(v=>v.toLowerCase()===name.toLowerCase()))return alert("This vendor folder already exists.");
+ db.vendors.push(name);document.getElementById("newVendor").value="";save();openVendor(name);
+}
+function renderHome(){
+ let box=document.getElementById("folders");
+ box.innerHTML=db.vendors.length?db.vendors.map(v=>{
+   let rs=db.records.filter(r=>r.vendor===v),left=rs.reduce((a,r)=>a+Number(r.qty)-Number(r.received||0),0),ov=rs.filter(r=>Number(r.qty)>Number(r.received||0)&&status(r)[1]==="over").length;
+   return `<div class="folder" onclick='openVendor(${JSON.stringify(v)})'><div class="icon">📁</div><div class="fname">${esc(v)}</div><div class="fmeta">${rs.length} entries • ${left} pending${ov?" • 🔴 "+ov+" overdue":""}</div></div>`;
+ }).join(""):'<div class="small">No folders yet. Create your first vendor folder below.</div>';
+ let open=db.records.filter(r=>Number(r.qty)>Number(r.received||0));
+ document.getElementById("openLots").textContent=open.length;
+ document.getElementById("pendingQty").textContent=open.reduce((a,r)=>a+Number(r.qty)-Number(r.received||0),0);
+ document.getElementById("overdue").textContent=open.filter(r=>status(r)[1]==="over").length;
+}
+function openVendor(v){
+ currentVendor=v;document.getElementById("home").classList.add("hidden");document.getElementById("vendorPage").classList.remove("hidden");document.getElementById("vendorTitle").textContent="📁 "+v+" — Ledger";
+ document.getElementById("outDate").value=today();document.getElementById("inDate").value=today();renderVendor();window.scrollTo(0,0);
+}
+function goHome(){currentVendor="";document.getElementById("vendorPage").classList.add("hidden");document.getElementById("home").classList.remove("hidden");renderHome();window.scrollTo(0,0)}
+function addOut(){
+ let invoice=document.getElementById("invoice").value.trim(),date=document.getElementById("outDate").value,material=document.getElementById("material").value.trim(),qty=Number(document.getElementById("qty").value),unit=document.getElementById("unit").value.trim(),due=document.getElementById("due").value;
+ if(!invoice||!date||!material||!qty||!unit||!due)return alert("Please fill every OUT field.");
+ if(db.records.some(r=>r.vendor===currentVendor&&r.invoice===invoice))return alert("Invoice/record number already exists for this vendor.");
+ db.records.unshift({id:Date.now().toString(),vendor:currentVendor,invoice,date,material,qty,unit,due,received:0});
+ if(!db.vendors.some(v=>v.toLowerCase()===currentVendor.toLowerCase()))db.vendors.push(currentVendor);
+ document.getElementById("invoice").value="";document.getElementById("material").value="";document.getElementById("qty").value="";document.getElementById("unit").value="";document.getElementById("due").value="";
+ save();
+}
+function addIn(){
+ let id=document.getElementById("inRecord").value,date=document.getElementById("inDate").value,q=Number(document.getElementById("inQty").value),r=db.records.find(x=>x.id===id);
+ if(!r||!date||!q)return alert("Select an OUT record and enter received quantity.");
+ let bal=Number(r.qty)-Number(r.received||0);if(q>bal)return alert("IN quantity cannot be greater than remaining quantity.");
+ r.received=Number(r.received||0)+q;save();document.getElementById("inQty").value="";
+}
+function renderVendor(){
+ let rs=db.records.filter(r=>r.vendor===currentVendor),out=0,inn=0,ov=0,rows=[];
+ rs.forEach(r=>{let bal=Number(r.qty)-Number(r.received||0),s=status(r);out+=Number(r.qty);inn+=Number(r.received||0);if(bal>0&&s[1]==="over")ov++;
+ rows.push(`<tr><td>${r.date}</td><td>OUT</td><td>${esc(r.invoice)}</td><td>${esc(r.material)}</td><td>${r.qty} ${esc(r.unit)}</td><td>${bal} ${esc(r.unit)}</td><td>${r.due}</td><td><span class="badge ${s[1]}">${s[0]}</span></td></tr>`);
+ if(r.received>0)rows.push(`<tr><td>—</td><td>IN</td><td>${esc(r.invoice)}</td><td>${esc(r.material)}</td><td>${r.received} ${esc(r.unit)}</td><td>${bal} ${esc(r.unit)}</td><td>${r.due}</td><td><span class="badge ok">Received</span></td></tr>`);
+ });
+ document.getElementById("vOut").textContent=out;document.getElementById("vIn").textContent=inn;document.getElementById("vLeft").textContent=out-inn;document.getElementById("vOver").textContent=ov;
+ document.getElementById("ledger").innerHTML=rows.join("")||'<tr><td colspan="8">No entries in this vendor folder.</td></tr>';
+ let open=rs.filter(r=>Number(r.qty)>Number(r.received||0));document.getElementById("inRecord").innerHTML='<option value="">Select OUT record...</option>'+open.map(r=>`<option value="${r.id}">${esc(r.invoice)} — ${esc(r.material)} — Pending ${Number(r.qty)-Number(r.received||0)} ${esc(r.unit)}</option>`).join("");
+ let mats=[...new Set(db.records.filter(r=>r.vendor===currentVendor).map(r=>r.material))];document.getElementById("materials").innerHTML=mats.map(x=>`<option value="${esc(x)}">`).join("");
+}
+function printCurrent(){document.title="Ledger - "+currentVendor;window.print()}
+function scrollToEntry(id){let el=document.getElementById(id==="out"?"invoice":"inRecord");el.scrollIntoView({behavior:"smooth",block:"center"});el.focus()}
+renderHome();
+</script>
+</body>
+</html>
